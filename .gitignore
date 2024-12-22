@@ -1,0 +1,16 @@
+# ignore Python cache and __pycache__ directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ignore model
+model.pkl
+vectorizer.pkl
+intents.json
+
+# ignore virtual environment
+venv
+
+# ignore environment
+.env
