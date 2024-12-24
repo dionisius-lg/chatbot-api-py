@@ -1,15 +1,15 @@
-from os import path
+import os
+import json
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
-from app.helpers import response
-from app.helpers.value import filter_data
+from app.helpers.response import ok as send_ok
+from app.helpers.request import filter_data
 from app.helpers import client_api
 from app.controllers import app_clients as app_clients_controller
 from app.schemas import webhook as schema
 from app.utils.model import Model
-import json
 
-__route = path.splitext(path.basename(__file__))[0]
+__route = os.path.splitext(os.path.basename(__file__))[0]
 router = APIRouter(prefix=f"/{__route}", tags=[__route])
 
 @router.post("/chat")
@@ -46,4 +46,4 @@ async def chat_message(body: schema.Chat):
         client_data=dict(chat_session_id=chat_session_id, text=chat_response)
         client_api.send(clients=clients, body=client_data)
 
-    return response.ok(**result)
+    return send_ok(**result)

@@ -1,7 +1,7 @@
 from os import path
 from app.utils.database import Database
-from bcrypt import hashpw, gensalt
 from datetime import datetime
+from bcrypt import hashpw, gensalt
 
 __table = path.splitext(path.basename(__file__))[0]
 
@@ -9,7 +9,7 @@ async def get_all(conditions: dict = None):
     custom_conditions = []
 
     if isinstance(conditions, dict) and conditions.get("fullname"):
-        custom_conditions.append(f"{__table} fullname LIKE '%{conditions['fullname']}%'")
+        custom_conditions.append(f"{__table}.fullname LIKE '%{conditions['fullname']}%'")
         del conditions["fullname"]
 
     if isinstance(conditions, dict) and conditions.get("start"):
@@ -28,7 +28,7 @@ async def get_all(conditions: dict = None):
 
     custom_columns = [
         "IFNULL(created_users.fullname, created_users.username) AS created_user",
-        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user",
+        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user"
     ]
 
     join = [
@@ -61,7 +61,7 @@ async def get_detail(conditions: dict = None):
     custom_conditions = []
 
     if isinstance(conditions, dict) and conditions.get("fullname"):
-        custom_conditions.append(f"{__table} fullname LIKE '%{conditions['fullname']}%'")
+        custom_conditions.append(f"{__table}.fullname LIKE '%{conditions['fullname']}%'")
         del conditions["fullname"]
 
     if isinstance(conditions, dict) and conditions.get("start"):
@@ -80,7 +80,7 @@ async def get_detail(conditions: dict = None):
 
     custom_columns = [
         "IFNULL(created_users.fullname, created_users.username) AS created_user",
-        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user",
+        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user"
     ]
 
     join = [

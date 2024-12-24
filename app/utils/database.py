@@ -2,7 +2,8 @@ from mysql.connector import pooling
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, date, time
 from app.config import database as config
-from app.helpers.value import is_empty, is_numeric, escape, filter_column_data
+from app.helpers.value import is_empty, is_numeric, escape
+from app.helpers.request import filter_column_data
 import re
 
 class Database:

@@ -77,16 +77,6 @@ def not_found(message:str = None):
 
     return JSONResponse(status_code=404, content=result)
 
-# response 404 Not Found
-def not_found_data(message:str = None):
-    result = {
-        "success": False,
-        "title": "Not Found",
-        "message": message or "Data not found"
-    }
-
-    return JSONResponse(status_code=404, content=result)
-
 # response 405 Method Not Allowed
 def method_not_allowed(message:str = None):
     result = {

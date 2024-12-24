@@ -3,9 +3,10 @@ from starlette.config import Config
 __config = Config(".env")
 
 app = {
-    "name": __config("APP_NAME") or "test",
+    "name": __config("APP_NAME") or "chatbot-api",
     "version": __config("APP_VERSION") or "1.0.0",
-    "port": __config("APP_PORT") or 9000
+    "port": __config("APP_PORT", cast=int, default=9000),
+    "reload": True if __config("APP_RELOAD") and __config("APP_RELOAD") == "1" else False
 }
 
 database = {
@@ -24,3 +25,7 @@ jwt = {
     "algorithm": __config("JWT_ALGORITHM", default=""),
     "live": __config("JWT_LIVE", cast=int, default=0)
 }
+
+file_dir = __config("FILE_DIR", default="/files")
+
+secret = __config("SECRET", default="")

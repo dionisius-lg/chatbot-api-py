@@ -1,16 +1,16 @@
-from os import path
+import os
+import json
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
-from app.helpers import response
-from app.helpers.value import filter_data
+from app.helpers.response import ok as send_ok, not_found as send_not_found
+from app.helpers.request import filter_data
 from app.helpers import client_api
 from app.controllers import app_clients as app_clients_controller
 from app.controllers import intents as intents_contoller
 from app.schemas import bot as schema
 from app.utils.model import Model
-import json
 
-__route = path.splitext(path.basename(__file__))[0]
+__route = os.path.splitext(os.path.basename(__file__))[0]
 router = APIRouter(prefix=f"/{__route}", tags=[__route])
 
 @router.get("/train")
@@ -19,7 +19,7 @@ async def train_model():
     result = await intents_contoller.get_all(conditions)
 
     if result["total"] == 0:
-        return response.not_found_data()
+        return send_not_found("Data not found")
 
     intents = []
 
@@ -41,7 +41,7 @@ async def train_model():
     with open('intents.json', 'w') as json_file:
         json.dump(intents, json_file)
 
-    return response.ok(**result)
+    return send_ok(**result)
 
 @router.post("/chat")
 async def chat_message(body: schema.Chat):
@@ -77,4 +77,4 @@ async def chat_message(body: schema.Chat):
         client_data=dict(chat_session_id=chat_session_id, text=chat_response)
         client_api.send(clients=clients, body=client_data)
 
-    return response.ok(**result)
+    return send_ok(**result)
