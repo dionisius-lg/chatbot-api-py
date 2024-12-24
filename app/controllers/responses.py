@@ -1,15 +1,18 @@
 from os import path
 from app.utils.database import Database
 from datetime import datetime
-import json
 
 __table = path.splitext(path.basename(__file__))[0]
 
 async def get_all(conditions: dict = None):
     custom_conditions = []
 
+    if isinstance(conditions, dict) and conditions.get("pattern"):
+        custom_conditions.append(f"{__table}.pattern LIKE '%{conditions['pattern']}%'")
+        del conditions["pattern"]
+
     if isinstance(conditions, dict) and conditions.get("tag"):
-        custom_conditions.append(f"{__table}.tag LIKE '%{conditions['tag']}%'")
+        custom_conditions.append(f"intents.tag LIKE '%{conditions['tag']}%'")
         del conditions["tag"]
 
     if isinstance(conditions, dict) and conditions.get("start"):
@@ -29,27 +32,13 @@ async def get_all(conditions: dict = None):
     custom_columns = [
         "IFNULL(created_users.fullname, created_users.username) AS created_user",
         "IFNULL(updated_users.fullname, updated_users.username) AS updated_user",
-        """IF(patterns.id IS NULL,
-            json_array(),
-            json_arrayagg(DISTINCT json_object(
-                'id', patterns.id,
-                'pattern', patterns.pattern
-            ))
-        ) AS patterns""",
-        """IF(responses.id IS NULL,
-            json_array(),
-            json_arrayagg(DISTINCT json_object(
-                'id', responses.id,
-                'response', responses.response
-            ))
-        ) AS responses"""
+        "intents.tag"
     ]
 
     join = [
         f"LEFT JOIN users AS created_users ON created_users.id = {__table}.created_by",
         f"LEFT JOIN users AS updated_users ON updated_users.id = {__table}.updated_by",
-        f"LEFT JOIN patterns ON patterns.intent_id = {__table}.id AND patterns.is_active = 1",
-        f"LEFT JOIN responses ON responses.intent_id = {__table}.id AND responses.is_active = 1"
+        f"LEFT JOIN intents ON intents.id = {__table}.intent_id"
     ]
 
     group_by = [f"{__table}.id"]
@@ -70,13 +59,6 @@ async def get_all(conditions: dict = None):
         custom_orders=custom_orders,
         having=having
     )
-
-    if result.get("data"):
-        for i, _ in enumerate(result["data"]):
-            if result["data"][i].get("patterns"):
-                result["data"][i]["patterns"] = json.loads(result["data"][i]["patterns"])
-            if result["data"][i].get("responses"):
-                result["data"][i]["responses"] = json.loads(result["data"][i]["responses"])
 
     return result
 
@@ -104,27 +86,13 @@ async def get_detail(conditions: dict = None):
     custom_columns = [
         "IFNULL(created_users.fullname, created_users.username) AS created_user",
         "IFNULL(updated_users.fullname, updated_users.username) AS updated_user",
-        """IF(patterns.id IS NULL,
-            json_array(),
-            json_arrayagg(DISTINCT json_object(
-                'id', patterns.id,
-                'pattern', patterns.pattern
-            ))
-        ) AS patterns""",
-        """IF(responses.id IS NULL,
-            json_array(),
-            json_arrayagg(DISTINCT json_object(
-                'id', responses.id,
-                'response', responses.response
-            ))
-        ) AS responses"""
+        "intents.tag"
     ]
 
     join = [
         f"LEFT JOIN users AS created_users ON created_users.id = {__table}.created_by",
         f"LEFT JOIN users AS updated_users ON updated_users.id = {__table}.updated_by",
-        f"LEFT JOIN patterns ON patterns.intent_id = {__table}.id AND patterns.is_active = 1",
-        f"LEFT JOIN responses ON responses.intent_id = {__table}.id AND responses.is_active = 1"
+        f"LEFT JOIN intents ON intents.id = {__table}.intent_id"
     ]
 
     group_by = [f"{__table}.id"]
@@ -139,11 +107,6 @@ async def get_detail(conditions: dict = None):
         join=join,
         group_by=group_by
     )
-
-    if result.get("data"):
-        for key in result["data"]:
-            if key in ["patterns", "responses"]:
-                result["data"][key] = json.loads(result["data"][key])
 
     return result
 

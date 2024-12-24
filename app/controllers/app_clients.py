@@ -1,6 +1,5 @@
 from os import path
 from app.utils.database import Database
-from bcrypt import hashpw, gensalt
 from datetime import datetime
 import json
 
@@ -10,7 +9,7 @@ async def get_all(conditions: dict = None):
     custom_conditions = []
 
     if isinstance(conditions, dict) and conditions.get("name"):
-        custom_conditions.append(f"{__table} name LIKE '%{conditions['name']}%'")
+        custom_conditions.append(f"{__table}.name LIKE '%{conditions['name']}%'")
         del conditions["name"]
 
     if isinstance(conditions, dict) and conditions.get("start"):
@@ -29,7 +28,7 @@ async def get_all(conditions: dict = None):
 
     custom_columns = [
         "IFNULL(created_users.fullname, created_users.username) AS created_user",
-        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user",
+        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user"
     ]
 
     join = [
@@ -56,9 +55,9 @@ async def get_all(conditions: dict = None):
         having=having
     )
 
-    if "data" in result:
+    if result.get("data"):
         for i, _ in enumerate(result["data"]):
-            if "auth" in result["data"][i]:
+            if result["data"][i].get("auth"):
                 try:
                     result["data"][i]["auth"] = json.loads(result["data"][i]["auth"])
                 except Exception as err:
@@ -71,7 +70,7 @@ async def get_detail(conditions: dict = None):
     custom_conditions = []
 
     if isinstance(conditions, dict) and conditions.get("name"):
-        custom_conditions.append(f"{__table} name LIKE '%{conditions['name']}%'")
+        custom_conditions.append(f"{__table}.name LIKE '%{conditions['name']}%'")
         del conditions["name"]
 
     if isinstance(conditions, dict) and conditions.get("start"):
@@ -90,7 +89,7 @@ async def get_detail(conditions: dict = None):
 
     custom_columns = [
         "IFNULL(created_users.fullname, created_users.username) AS created_user",
-        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user",
+        "IFNULL(updated_users.fullname, updated_users.username) AS updated_user"
     ]
 
     join = [
@@ -111,7 +110,7 @@ async def get_detail(conditions: dict = None):
         group_by=group_by
     )
 
-    if "data" in result:
+    if result.get("data"):
         for key in result["data"]:
             if key in ["auth"]:
                 try:
