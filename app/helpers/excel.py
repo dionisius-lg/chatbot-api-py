@@ -2,11 +2,12 @@ import os
 import openpyxl
 from openpyxl.styles import PatternFill, Font, Border, Side
 from openpyxl.utils import get_column_letter
+from typing import Any
 from datetime import datetime
-from app.helpers.value import is_empty, random_string
+from app.helpers.value import is_empty, random_string, format_snakecase
 from app.config import file_dir
 
-def export(column_data: dict, row_data: list[dict], file_name: str = None, sub_path: str = None):
+def create_excel(column_data: dict[str, str], row_data: list[dict[str, Any]], file_name: str | None = None, sub_path: str | None = None) -> dict[str, Any]:
     if isinstance(file_name, str) and not is_empty(file_name):
         file_name = file_name.split('.')[0].strip()
     else:
@@ -15,11 +16,10 @@ def export(column_data: dict, row_data: list[dict], file_name: str = None, sub_p
     # replace multiple space with one space replace then space with underscore
     file_name = file_name.replace('  ', ' ').replace(' ', '_')
     # concat with random string and file extension
-    file_name += f"-{random_string(16, True)}.xlsx";
+    file_name += f"-{random_string(8, True)}.xlsx";
 
-    today = datetime.now()
-    ymd = today.strftime('%Y/%m/%d')
-    file_path = f"{file_dir}/ymd"
+    ymd = datetime.now().strftime("%Y/%m/%d")
+    file_path = f"{file_dir}/{ymd}"
 
     if isinstance(sub_path, str) and not is_empty(sub_path):
         # replace multiple slashes with a single slash and clean up the path
@@ -76,3 +76,37 @@ def export(column_data: dict, row_data: list[dict], file_name: str = None, sub_p
         "path": file_path,
         "size": file_size
     }
+
+def read_excel(destination: str):
+    result: list[dict[str, Any]] = []
+
+    try:
+        headers: list[str] = []
+
+        if not os.path.exists(destination):
+            raise ValueError("File not found")
+        
+        # load the workbook
+        workbook = openpyxl.load_workbook(filename=destination, read_only=True)
+
+        # process only the first worksheet
+        worksheet = workbook.active
+
+        for row_idx, row in enumerate(worksheet.iter_rows(values_only=True)):
+            if row_idx == 0:
+                # process header row
+                headers = [format_snakecase(cell) for cell in row if cell is not None]
+            else:
+                rowData: dict[str, Any] = {}
+
+                for cell_idx, cell in enumerate(row):
+                    if cell_idx < len(headers):
+                        header_name = headers[cell_idx]
+                        # store the cell value under the corresponding header
+                        rowData[header_name] = cell
+
+                result.append(rowData)
+
+        return result
+    except Exception:
+        return result

@@ -1,15 +1,19 @@
 import os
-from fastapi import APIRouter, Depends
+import asyncio
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.encoders import jsonable_encoder
 from app.helpers.response import ok as send_ok, created as send_created, not_found as send_not_found, bad_request as send_bad_request
-from app.helpers.request import filter_data
-from app.controllers import patterns as controller
+from app.helpers.request import filter_data, filter_column_data
+from app.helpers.value import is_empty
+from app.helpers.upload import single_file
+from app.helpers.excel import read_excel
+from app.controllers import patterns as controller, intents as intents_controller
 from app.schemas import patterns as schema
 
 __route = os.path.splitext(os.path.basename(__file__))[0]
 router = APIRouter(prefix=f"/{__route}", tags=[__route])
 
-@router.get("", response_model=schema.FetchData)
+@router.get("")
 async def fetch_data(query: schema.FetchData = Depends()):
     conditions = filter_data(jsonable_encoder(query))
     result = await controller.get_all(conditions)
@@ -48,6 +52,57 @@ async def insert_many_update_data(body: schema.InsertManyUpdateData):
         return send_ok(**result)
 
     return send_bad_request(result.get("error") or None)
+
+@router.post("/import")
+async def import_data(file: UploadFile = File()):
+    upload = await single_file(file=file, sub_path="import", mime_types=["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"])
+
+    if upload.get("error"):
+        return send_bad_request(upload["error"])
+
+    data = await asyncio.to_thread(read_excel, destination=upload["destination"])
+
+    if is_empty(data):
+        return send_bad_request("Data is empty")
+
+    allowed_keys = ["pattern", "tag"]
+    intents = await intents_controller.get_all(dict(is_active="1", limit=0))
+
+    if intents["total"] == 0:
+        return send_not_found("Intent not found")
+
+    for i, row in enumerate(data):
+        tag = row.pop("tag")
+        row = filter_column_data(data=row, columns=allowed_keys)
+        row = filter_data(row)
+
+        if is_empty(row):
+            continue
+
+        if is_empty(tag):
+            continue
+
+        intent = next(
+            (r for r in intents["data"] if str(r["tag"]).lower() == str(tag).lower()),
+            None
+        )
+
+        if intent is None:
+            continue
+
+        data[i] = {
+            **row,
+            "intent_id": intent["id"],
+            "created_by": None
+        }
+
+    if not is_empty(data):
+        result = await controller.insert_many(data)
+
+        if result["total"] > 0:
+            return send_created(**result)
+
+    return send_bad_request()
 
 @router.get("/{id}")
 async def fetch_data_by_id(id: int):
