@@ -23,12 +23,12 @@ def is_json(value):
         if isinstance(parsed, dict) and not is_empty(parsed):
             return parsed
 
-        return False
-    except (ValueError, TypeError):
+        raise ValueError("Not JSON data")
+    except Exception:
         return False
 
 def is_domain_address(value: str) -> bool:
-    # Regex for validating IP address
+    # regex for validating ip address
     ip_regex = r'^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.' \
                r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.' \
                r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.' \
@@ -68,3 +68,7 @@ def excel_column_name(value: int) -> str:
 
 def escape(value) -> str:
     return f"'{value}'" if isinstance(value, str) else str(value)
+
+def format_snakecase(value: str) -> str:
+    # cleans the header string by replacing unwanted characters and formatting
+    return re.sub(r'[^0-9a-z ]', '', value.lower()).replace('  ', ' ').replace(' ', '_')

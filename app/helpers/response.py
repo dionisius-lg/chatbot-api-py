@@ -1,8 +1,9 @@
 from fastapi.responses import JSONResponse
 from math import ceil
+from typing import Any
 
 # response 200 OK
-def ok(total:int = 0, data: list|dict = None, limit: int = None, page: int = None):
+def ok(total:int = 0, data: list[dict[str, Any]] | dict[str, Any] = None, limit: int | None = None, page: int | None = None):
     result = {
         "success": True,
         "total": total,
