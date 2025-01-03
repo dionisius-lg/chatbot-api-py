@@ -17,7 +17,6 @@ To get started with the Chatbot API, clone the repository and install the requir
 ```bash
 git clone https://github.com/dionisius-lg/chatbot-api-py.git
 cd chatbot-api
-venv/Scripts/activate
 pip install -r requirements.txt
 ```
 
