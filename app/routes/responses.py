@@ -72,8 +72,8 @@ async def import_data(file: UploadFile = File()):
         return send_not_found("Intent not found")
 
     for i, row in enumerate(data):
-        tag = row.pop("tag")
         row = filter_column_data(data=row, columns=allowed_keys)
+        tag = row.pop("tag")
         row = filter_data(row)
 
         if is_empty(row):

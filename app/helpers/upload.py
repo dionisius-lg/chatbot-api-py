@@ -1,9 +1,9 @@
 import os
-import shutil
-from fastapi import File, UploadFile, Depends
+import re
+import json
+from fastapi import File
 from datetime import datetime
-from app.helpers.response import bad_request as send_bad_request
-from app.helpers.value import is_empty
+from app.helpers.value import is_empty, is_json, random_string
 from app.config import file_dir
 
 async def single_file(file: File, sub_path: str = "", size_limit: int = 1, mime_types: list[str] = None):
@@ -15,6 +15,22 @@ async def single_file(file: File, sub_path: str = "", size_limit: int = 1, mime_
         "size": 0,
         "error": None
     }
+
+    with open('extensions.json', 'r', encoding='utf-8') as f:
+        extensions = f.read()
+
+    if is_json(extensions):
+        extensions = json.loads(extensions)
+
+    file_extension = next((key for key, value in extensions.items() if value == result["mimetype"]), None)
+
+    file_name = file.filename.split(".")[0]
+    file_name = re.sub(r"[^a-zA-Z0-9 _.\-]", "", str(file_name)).strip()
+
+    if is_empty(file_name):
+        file_name = "import"
+
+    result["filename"] = f"{file_name}-{random_string(4)}{int(datetime.now().timestamp())}.{file_extension}"
 
     # read the file contents to check size
     file_content = await file.read()
