@@ -1,11 +1,7 @@
-
-
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from starlette.requests import Request
 from app.helpers import response
-from app.helpers.value import is_numeric
 
 # handle 400 Bad Request
 async def bad_request(request: Request, exception: HTTPException):

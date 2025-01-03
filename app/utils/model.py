@@ -28,7 +28,7 @@ class Model:
             for pattern in intent["patterns"]:
                 lemmatized_sentence = self.lemmatize_sentence(pattern)
                 training_sentences.append(lemmatized_sentence)
-                training_labels.append(intent['tag'])
+                training_labels.append(intent["tag"])
 
         # prepare vecorizer to change sentence to numeric feature
         self.vectorizer = CountVectorizer()
@@ -39,17 +39,17 @@ class Model:
         self.model.fit(training_vectors, training_labels)
 
     def save_model(self, model_path, vectorizer_path):
-        with open(model_path, 'wb') as model_file:
+        with open(model_path, "wb") as model_file:
             pickle.dump(self.model, model_file)
 
-        with open(vectorizer_path, 'wb') as vectorizer_file:
+        with open(vectorizer_path, "wb") as vectorizer_file:
             pickle.dump(self.vectorizer, vectorizer_file)
 
     def load_model(self, model_path, vectorizer_path):
-        with open(model_path, 'rb') as model_file:
+        with open(model_path, "rb") as model_file:
             self.model = pickle.load(model_file)
 
-        with open(vectorizer_path, 'rb') as vectorizer_file:
+        with open(vectorizer_path, "rb") as vectorizer_file:
             self.vectorizer = pickle.load(vectorizer_file)
 
     def predict_class(self, text):
@@ -66,22 +66,34 @@ class Model:
 
         # when class match, process response
         for intent in intents:
-            if intent['tag'] == predicted_class:
+            if intent["tag"] == predicted_class:
+                print(predicted_class)
                 # check if pattern has name to retrieve for greeting tag
-                if predicted_class == "greeting":
+                if predicted_class == "salam":
                     # use regex to extract name from pattern
                     match = re.search(r"(halo saya|nama saya) ([A-Za-z ]+)", user_input)
 
                     if match:
                         # name found
                         name = match.group(2)
-                        name = f" {name}"
-                        return random.choice(intent['responses']).format(name=name)
+                        name = f"{name}"
+                        result = random.choice(intent["responses"]).format(name=name)
+                        # return random.choice(intent["responses"]).format(name=name)
                     else:
-                        return random.choice(intent['responses']).format(name="")
+                        result = random.choice(intent["responses"]).format(name="")
+                        # print(qwe)
+                        # return qwe
+                        # return random.choice(intent["responses"]).format(name="")
+                    
+                    result = result.strip()
+                    result = result.replace(" ,", ",").replace(" .", ".").replace(" ?", "?").replace(" !", "!")
+                    result = re.sub(r'([,.?])\s+', r'\1 ', result)  # Put single space after punctuation
+                    result = re.sub(r'\s+', ' ', result)
+                    result = result.strip()
+                    return result
                 else:
                     # for tag except greeting, return random response
                     # Untuk tag selain greeting, langsung kembalikan respons acak
-                    return random.choice(intent['responses'])
+                    return random.choice(intent["responses"])
 
         return "Saya tidak mengetahui yang Anda maksud."

@@ -1,4 +1,5 @@
 import os
+import re
 import openpyxl
 from openpyxl.styles import PatternFill, Font, Border, Side
 from openpyxl.utils import get_column_letter
@@ -9,21 +10,21 @@ from app.config import file_dir
 
 def create_excel(column_data: dict[str, str], row_data: list[dict[str, Any]], file_name: str | None = None, sub_path: str | None = None) -> dict[str, Any]:
     if isinstance(file_name, str) and not is_empty(file_name):
-        file_name = file_name.split('.')[0].strip()
+        file_name = file_name.split(".")[0].strip()
     else:
         file_name = "output"
 
-    # replace multiple space with one space replace then space with underscore
-    file_name = file_name.replace('  ', ' ').replace(' ', '_')
+    # sanitize file name
+    file_name = re.sub(r"[^a-zA-Z0-9 _.\-]", "", str(file_name)).strip().replace("  ", " ").replace(" ", "_")
     # concat with random string and file extension
-    file_name += f"-{random_string(8, True)}.xlsx";
+    file_name += f"-{random_string(4)}{int(datetime.now().timestamp())}.xlsx";
 
     ymd = datetime.now().strftime("%Y/%m/%d")
     file_path = f"{file_dir}/{ymd}"
 
     if isinstance(sub_path, str) and not is_empty(sub_path):
         # replace multiple slashes with a single slash and clean up the path
-        sub_path = sub_path.replace('//', '/').strip('/')
+        sub_path = sub_path.replace("//", "/").strip("/")
         file_path = f"{file_dir}/{sub_path}/{ymd}"
 
     os.makedirs(file_path, exist_ok=True)
@@ -31,7 +32,7 @@ def create_excel(column_data: dict[str, str], row_data: list[dict[str, Any]], fi
     # create a new workbook and worksheet
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = file_name.split('.')[0]
+    ws.title = file_name.split(".")[0]
     column = []
 
     for key, value in column_data.items():
@@ -54,7 +55,7 @@ def create_excel(column_data: dict[str, str], row_data: list[dict[str, Any]], fi
     # add rows of data
     for row_idx, row in enumerate(row_data, start=2):
         for col_idx, col in enumerate(column, start=1):
-            value = row.get(col['key'], '')
+            value = row.get(col["key"], "")
             cell = ws.cell(row=row_idx, column=col_idx, value=value)
             cell.border = Border(
                 top=Side(style="thin"), 
